@@ -1,5 +1,5 @@
-import axios from 'axios';
 import React, { useState } from 'react';
+import API from './api';
 
 import ContextForm from './ContextForm';
 import TimelineView from './TimelineView';
@@ -36,7 +36,7 @@ function App() {
     const { user_email, ...simContext } = ctx;
     setContext(simContext);
     try {
-      const response = await axios.post('/simulate', {
+      const response = await API.post('/simulate', {
         decision,
         context: simContext,
         user_email: user_email || undefined,

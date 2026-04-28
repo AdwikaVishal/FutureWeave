@@ -8,8 +8,8 @@
  *   context   – current user context
  *   onClose   – fn()
  */
-import axios from 'axios';
 import React, { useState } from 'react';
+import API from './api';
 import RadarChart from './RadarChart';
 
 const RADAR_NODE_LABELS = {
@@ -43,7 +43,7 @@ function CompareTwoModal({ context, onClose }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post('/compare-two', {
+      const res = await API.post('/compare-two', {
         decision_a: decisionA,
         decision_b: decisionB,
         context,

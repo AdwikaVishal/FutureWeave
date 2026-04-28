@@ -1,8 +1,8 @@
-import axios from 'axios';
 import * as d3 from 'd3';
 import React, {
   useState, useEffect, useRef, useMemo, useCallback,
 } from 'react';
+import API from './api';
 
 import RadarChart from './RadarChart';
 import ValuesSlider from './ValuesSlider';
@@ -471,7 +471,7 @@ function TimelineView({ data, decision }) {
     if (!pivotData || !alternative) return;
     setPivotLoading(true);
     try {
-      const res = await axios.post('/pivot', {
+      const res = await API.post('/pivot', {
         original_timeline: pivotData.originalTimeline,
         event_year: pivotData.year,
         alternative_outcome: alternative,

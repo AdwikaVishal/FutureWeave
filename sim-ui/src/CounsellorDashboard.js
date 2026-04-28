@@ -7,8 +7,8 @@
  * Accessed via ?counsellor=email@example.com in the URL or via the
  * "Counsellor Login" button in the header.
  */
-import axios from 'axios';
 import React, { useState, useCallback } from 'react';
+import API from './api';
 
 function CounsellorDashboard({ onClose }) {
   const [email, setEmail] = useState('');
@@ -24,7 +24,7 @@ function CounsellorDashboard({ onClose }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('/counsellor/students', {
+      const res = await API.get('/counsellor/students', {
         params: { counsellor_email: counsellorEmail },
       });
       setStudents(res.data.students || []);
@@ -46,7 +46,7 @@ function CounsellorDashboard({ onClose }) {
     if (!note) return;
     setSavingNote(simId);
     try {
-      await axios.post('/counsellor/note', {
+      await API.post('/counsellor/note', {
         simulation_id: simId,
         counsellor_email: email,
         note,

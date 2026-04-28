@@ -8,8 +8,8 @@
  *   simulationId  – int
  *   onScore       – fn({ scores, ranked, recommendation, weights_used })
  */
-import axios from 'axios';
 import React, { useState, useCallback, useEffect } from 'react';
+import API from './api';
 
 const NODES = [
   { key: 'income', label: 'Income', color: '#00f2ff' },
@@ -62,7 +62,7 @@ function ValuesSlider({ simulationId, onScore }) {
       const normWeights = Object.fromEntries(
         Object.entries(weights).map(([k, v]) => [k, v / total]),
       );
-      const res = await axios.post('/score', {
+      const res = await API.post('/score', {
         simulation_id: simulationId,
         weights: normWeights,
       });
