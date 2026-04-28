@@ -8,8 +8,8 @@
  *   location – string
  *   skills   – string (comma-separated from context form)
  */
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import API from './api';
 
 const TREND_COLOR = { rising: '#00ff88', stable: '#ffaa00', unknown: '#6a6a9a' };
 const TREND_ICON = { rising: '↑', stable: '→', unknown: '?' };
@@ -20,7 +20,7 @@ function JobMarketPanel({ role, location, skills }) {
 
   useEffect(() => {
     if (!role) return;
-    axios
+    API
       .get('/job-market', { params: { role, location, skills } })
       .then((res) => setData(res.data))
       .catch(() => setData(null))

@@ -6,8 +6,8 @@
  * Props:
  *   onClose – fn()
  */
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import API from './api';
 
 const LANE_COLORS = { 'Timeline A': '#00f2ff', 'Timeline B': '#ff2a7a', 'Timeline C': '#7b2fff' };
 
@@ -16,7 +16,7 @@ function OutcomeLibrary({ onClose }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
+    API
       .get('/outcomes?limit=30')
       .then((res) => setData(res.data))
       .catch(() => setData(null))
