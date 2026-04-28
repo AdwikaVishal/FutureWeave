@@ -138,7 +138,7 @@ marshmallow==3.26.1
 matplotlib==3.10.6
 mccabe==0.7.0
 mdurl==0.1.2
-mediapipe==0.10.21
+mediapipe==0.10.35
 ml_dtypes==0.5.3
 modelscope==1.35.4
 moviepy==1.0.3
