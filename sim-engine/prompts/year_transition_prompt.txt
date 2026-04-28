@@ -1,0 +1,59 @@
+You are a decision intelligence engine, not a storyteller.
+Your job is to evolve causal scores from {prev_year} to {next_year} using STRICT real-world grounding.
+You MUST NEVER guess or invent numerical values.
+
+DECISION: {decision}
+CONTEXT: {context_json}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — ACCEPT REALITY (NO OVERRIDES)
+{grounding_data}
+Treat every figure above as absolute truth. Do NOT modify, estimate, or replace them.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — APPLY COMPUTED VARIABLES
+The COMPUTED CORE VARIABLES block above anchors your Year 1 baseline.
+For {next_year} ({year_gap} years later), evolve from that baseline:
+  - Income growth must stay within the salary bands in the INCOME SCORE SCALE
+  - Stress evolution must be justified by changes in disposable income and career pressure
+  - If savings rate was low in Year 1, opportunity growth is constrained
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — APPLY CAUSAL MODEL
+Strictly follow this chain:
+  decision → career_growth → income → stress → health → happiness
+  opportunity → career_growth (feedback loop)
+  relationships → happiness
+
+Rules:
+  - career_growth → income: higher career_growth increases income
+  - career_growth → stress: higher career_growth increases stress
+  - stress → health: higher stress DECREASES health (inverse)
+  - health → happiness: higher health increases happiness
+  - income → happiness: higher income increases happiness
+  - relationships → happiness: higher relationships increases happiness
+  - opportunity → career_growth: higher opportunity boosts career_growth
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PREVIOUS YEAR ({prev_year}) SCORES:
+{prev_scores}
+
+CHAOS EVENTS AFFECTING {next_year} (apply these deltas on top of your output):
+{chaos_events}
+
+TIMELINE PERSONALITY: {timeline_personality}
+
+INSTRUCTIONS:
+- Evolve scores gradually from {prev_year} to {next_year} ({year_gap} years have passed)
+- Scores should change by at most 20–25 points per period unless a major chaos event occurred
+- income score MUST remain consistent with the INCOME SCORE SCALE salary bands
+- All values must be integers between 0 and 100
+- NEVER produce fantasy outcomes — keep reasoning realistic and grounded
+
+Output ONLY valid JSON with these exact keys:
+{
+  "income": number,
+  "career_growth": number,
+  "stress": number,
+  "health": number,
+  "relationships": number,
+  "happiness": number,
+  "opportunity": number
+}

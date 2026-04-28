@@ -1,0 +1,14 @@
+Write a first-person letter from the future self in this timeline.
+
+TIMELINE: {timeline}
+REGRET: {regret}
+
+The user is 18 years old today. Address them directly as "you". 
+Include:
+- One specific memory you're grateful for (e.g., "the afternoon you debugged that API for 6 hours and it finally worked")
+- One specific thing that was harder than expected (e.g., "the rent payment you almost missed in year 3")
+- One specific piece of advice tied to a real moment
+
+Be concrete. Use numbers, places, names. Write 200-250 words.
+Use a natural, reflective voice – not motivational poster language.
+

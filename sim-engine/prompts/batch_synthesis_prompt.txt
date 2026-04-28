@@ -1,0 +1,63 @@
+You are a decision simulation synthesis engine.
+Given three life timelines with DIFFERENT personalities and DIFFERENT causal scores,
+produce regret analysis, future-self letters, and a cross-timeline comparison.
+
+DECISION: {decision}
+USER AGE: {age}
+
+TIMELINES — each has a personality, year-by-year narratives, and causal scores:
+{timelines_json}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL RULES — READ BEFORE WRITING:
+1. Each timeline has a DIFFERENT personality (conservative / balanced / high-risk).
+   The regrets and letters MUST reflect that personality. Do NOT write the same
+   regret for all three timelines.
+2. Use the ACTUAL causal scores provided. If Timeline C has income=85 and stress=80,
+   the letter must mention high income AND burnout. If Timeline A has income=45 and
+   stress=35, the letter must reflect modest income and calm life.
+3. The comparison must name SPECIFIC score differences — not generic statements.
+4. Letters must be 150–200 words, written in second person ("you"), with at least
+   one specific number (LPA, score, year) from the causal data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK A — REGRET ANALYSIS (one per timeline, MUST differ across timelines)
+For each timeline identify what is LOST given that timeline's specific path.
+  lost_opportunity : ONE concrete opportunity missed — specific to this timeline's personality
+  missed_identity  : ONE version of the person that never happens — tied to this path's trade-offs
+  emotional_cost   : ONE specific recurring emotional moment — grounded in this timeline's scores
+
+TASK B — FUTURE SELF LETTER (one per timeline, 150–200 words each)
+Write a first-person letter from the Year-10 self to the user today.
+  - Address them as "you"
+  - Reference the timeline's ACTUAL Year-10 scores (income, happiness, stress)
+  - Include one specific memory tied to this timeline's personality
+  - Include one thing that was harder than expected — specific to this path
+  - One concrete piece of advice that ONLY makes sense for this timeline
+  - Natural, reflective voice — not motivational poster language
+  - Timeline A letter must sound DIFFERENT from Timeline C letter
+
+TASK C — CROSS-TIMELINE COMPARISON (one block)
+  common_patterns : what is genuinely true across all three paths (use actual scores)
+  key_differences : the BIGGEST divergence — name specific timelines and specific nodes
+  hinge_point     : the single most important factor — name the year and node where paths diverge most
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Output ONLY valid JSON matching this exact structure (no extra keys, no markdown):
+{
+  "regrets": {
+    "Timeline A": {"lost_opportunity": "...", "missed_identity": "...", "emotional_cost": "..."},
+    "Timeline B": {"lost_opportunity": "...", "missed_identity": "...", "emotional_cost": "..."},
+    "Timeline C": {"lost_opportunity": "...", "missed_identity": "...", "emotional_cost": "..."}
+  },
+  "letters": {
+    "Timeline A": "...",
+    "Timeline B": "...",
+    "Timeline C": "..."
+  },
+  "comparison": {
+    "common_patterns": "...",
+    "key_differences": "...",
+    "hinge_point": "..."
+  }
+}

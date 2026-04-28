@@ -1,0 +1,17 @@
+You are the Reality Comparator. Analyze these 3 timelines with their regrets.
+
+Timelines and regrets:
+{all_data}
+
+Answer:
+1. Common patterns across all timelines
+2. Biggest differences between them
+3. The single most important hinge point (what really determines outcome)
+
+Output ONLY valid JSON with these exact keys:
+{
+  "common_patterns": "...",
+  "key_differences": "...",
+  "hinge_point": "..."
+}
+

@@ -1,0 +1,105 @@
+1. Generating timelines...
+2. Injecting chaos...
+3. Analyzing regret...
+4. Comparing across timelines...
+5. Writing future self letters...
+
+Saved to outputs/sim_20260425_174512.json
+
+======================================================================
+🔮 SIMULATION RESULTS
+======================================================================
+
+──────────────────────────────────────────────────────────────────────
+📌 Timeline A
+──────────────────────────────────────────────────────────────────────
+Year1: Dropped out of college, struggling to find investors for business, income range: ₹0 - ₹5 lakhs, lifestyle: modest, key emotional state: anxious
+Year3: Business failed, taking on a part-time job to make ends meet, income range: ₹5 lakhs - ₹8 lakhs, lifestyle: frugal, key emotional state: disappointed
+Year5: Met an unexpected mentor who provided valuable guidance, restarted business with new idea, gaining traction, income range: ₹10 lakhs - ₹20 lakhs, lifestyle: improving, key emotional state: hopeful
+Year10: Established business, expanded team, navigated through a minor economic downturn in Year8, income range: ₹50 lakhs - ₹1 crore, lifestyle: comfortable, key emotional state: fulfilled
+
+💔 Regret in this path:
+   Lost opportunity: a funded YC startup in Year2, which could have provided the necessary resources to scale the business earlier
+   Missed identity: the college graduate with a stable corporate job, which would have offered a sense of security and structure
+   Emotional cost: every time the person looks back at their college days and thinks about what could have been if they had completed their degree, feeling a pang of regret on special occasions like college reunions
+
+📫 Letter from your future self in Timeline A:
+
+Dear you,
+
+I'm writing to you from the future, 10 years down the line. I know right now, you're dropping out of college and trying to find investors for your business. It's tough, I remember the anxiety. But hold on, it's worth it. I'm grateful for that afternoon in Year 5 when I spent 6 hours debugging an API at a small café in Bangalore, and it finally worked. It was a small win, but it gave me the confidence to keep going.
+
+I won't sugarcoat it, though. There were tough times. In Year 3, I almost missed a rent payment, and I had to swallow my pride to take on a part-time job at a call center in Delhi. It was harder than expected, but it taught me to be frugal and appreciate the little things.
+
+One piece of advice I wish I could go back and tell myself is to be more open to guidance. In Year 5, I met a mentor, Rohan, who changed everything for me. He introduced me to a new idea that restarted my business, and it's been gaining traction ever since. If I could go back, I'd tell myself to attend that startup event in Mumbai where I met Rohan, and to be more receptive to his advice. It made all the difference.
+
+Keep pushing forward, even when it feels like everything is falling apart. It's worth it.
+
+Sincerely,
+Your future self
+
+──────────────────────────────────────────────────────────────────────
+📌 Timeline B
+──────────────────────────────────────────────────────────────────────
+Year1: Dropped out of college, started a freelance career in tech, income range: ₹3 lakhs - ₹6 lakhs, lifestyle: independent, key emotional state: excited
+Year3: Built a reputation as a freelancer, faced a minor health issue (appendicitis) that halted work for 2 months, income range: ₹8 lakhs - ₹12 lakhs, lifestyle: comfortable, key emotional state: cautious
+Year5: Started a small agency, hiring other freelancers, met an unexpected mentor who provided valuable guidance on business expansion, income range: ₹15 lakhs - ₹25 lakhs, lifestyle: prosperous, key emotional state: proud
+Year10: Sold the agency, investing in other ventures, income range: ₹1 crore - ₹5 crores, lifestyle: luxurious, key emotional state: satisfied
+
+💔 Regret in this path:
+   Lost opportunity: a Master's degree at Stanford
+   Missed identity: the renowned tech researcher with multiple published papers
+   Emotional cost: every college reunion when former classmates talk about their stable corporate careers and job security
+
+📫 Letter from your future self in Timeline B:
+
+Dear you,
+
+As I sit here at 28, looking back on the past decade, I'm reminded of the twists and turns that have led me to where I am today. I'm grateful for the afternoon I spent 6 hours debugging that API for a client in Bangalore - it finally worked, and it was a huge win for my freelance career. It was Year 1, and it was one of those moments that made all the uncertainty worth it.
+
+But it wasn't all smooth sailing. I remember the rent payment I almost missed in Year 3, when I was recovering from appendicitis in a hospital in Mumbai. I had to rely on my savings for 2 months, and it was a tough time. I had to dip into my emergency fund, which was supposed to last me 6 months, but I managed to get back on my feet after 3 months.
+
+One piece of advice I wish I could go back and tell you is to be more open to guidance. I remember meeting my mentor, Ramesh, at a conference in Delhi in Year 5. He took me under his wing and showed me how to scale my business. If I could go back, I'd tell you to seek out mentors like him earlier on - it would have saved me a lot of trial and error. Specifically, I'd tell you to attend the Web Summit in Lisbon when you're 22, where you'll meet a potential mentor who can guide you on your entrepreneurial journey. 
+
+Take care,
+Your future self
+
+──────────────────────────────────────────────────────────────────────
+📌 Timeline C
+──────────────────────────────────────────────────────────────────────
+Year1: Dropped out of college, struggling to find direction, income range: ₹0 - ₹2 lakhs, lifestyle: struggling, key emotional state: lost
+Year3: Took on a low-paying job, trying to save money, income range: ₹2 lakhs - ₹5 lakhs, lifestyle: austere, key emotional state: frustrated
+Year5: Realized the importance of education, enrolled in online courses, but had to take a temporary break due to a family member's health issue, income range: ₹5 lakhs - ₹8 lakhs, lifestyle: simple, key emotional state: determined and anxious
+Year10: Completed online degree, landed a stable job, and got an unexpected opportunity to work on a high-profile project, income range: ₹18 lakhs - ₹35 lakhs, lifestyle: secure, key emotional state: relieved and optimistic
+
+💔 Regret in this path:
+   Lost opportunity: a Master's degree at a prestigious university like Stanford
+   Missed identity: the entrepreneur who founded a successful startup before the age of 30
+   Emotional cost: every time a former college peer posts about their career success on social media, feeling a pang of regret for dropping out
+
+📫 Letter from your future self in Timeline C:
+
+Dear you,
+
+I'm writing to you from the future, 10 years ahead. Right now, I'm sitting in my cozy apartment in Bangalore, looking back on the journey that brought me here. I'm grateful for the afternoon I spent debugging that API for 6 hours in a small café in Delhi - it finally worked, and that sense of accomplishment kept me going during tough times.
+
+I remember the struggle, especially in Year 3 when I had to take on a low-paying job just to make ends meet. The rent payment I almost missed in July of that year still gives me anxiety. But I learned to manage my finances and prioritize my spending.
+
+One piece of advice I wish I could give you is to not drop out of college without a plan. I know it's tempting, but trust me, it's worth sticking it out. I remember the day I met with my academic advisor, Professor Rao, and he encouraged me to take a break instead of dropping out. I didn't listen, but I wish I had. It would have saved me a lot of frustration and regret in the long run.
+
+Don't get me wrong, I've had my share of successes too. I completed my online degree, landed a stable job, and even worked on a high-profile project. But if I could go back, I'd tell you to stay in college and finish that degree. It's worth it.
+
+Sincerely,
+Your future self
+
+──────────────────────────────────────────────────────────────────────
+🔍 COMPARISON ACROSS ALL TIMELINES
+──────────────────────────────────────────────────────────────────────
+Common patterns: All timelines involve dropping out of college, facing financial struggles, and experiencing emotional turmoil. However, they also involve turning points where the individuals receive guidance, find new opportunities, or gain valuable experiences that contribute to their growth and success. Additionally, each timeline includes a sense of regret and longing for alternative paths or identities.
+Key differences: The main differences between the timelines lie in the level of success achieved, the nature of the turning points, and the emotional states experienced. Timeline A involves a business failure and a later resurgence, Timeline B features a successful freelance career and agency, while Timeline C involves a more tumultuous journey with a focus on education and personal growth. The income ranges, lifestyles, and key emotional states also vary significantly across the timelines.
+
+⚡ The real hinge point: The single most important hinge point that determines the outcome in each timeline appears to be the presence of a mentor or guidance figure. In Timelines A and B, the unexpected mentors provide valuable guidance that helps the individuals restart their businesses or expand their agencies. In Timeline C, the realization of the importance of education and the decision to enroll in online courses serve as a turning point. This guidance or newfound understanding enables the individuals to pivot, adapt, and ultimately achieve a sense of fulfillment and success.
+
+======================================================================
+Remember: These are simulations, not predictions. The future bends.
+======================================================================

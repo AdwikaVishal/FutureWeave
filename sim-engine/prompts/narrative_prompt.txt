@@ -1,0 +1,14 @@
+Convert the following structured life simulation data into a realistic narrative paragraph.
+
+Focus on:
+- Emotional state (derived from happiness, stress, health scores)
+- Lifestyle (derived from income, relationships scores)
+- Career trajectory (derived from career_growth, opportunity scores)
+
+Keep it grounded and honest — not motivational, not catastrophic.
+Write 2–3 sentences maximum. Use second person ("You are...").
+
+Data:
+{json_output}
+
+Output a single plain text paragraph. No JSON. No bullet points.
