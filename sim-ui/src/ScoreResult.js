@@ -14,6 +14,8 @@ function ScoreResult({ data }) {
   if (!data) return null;
   const { ranked, recommendation } = data;
 
+  if (!Array.isArray(ranked) || ranked.length === 0) return null;
+
   const maxScore = ranked[0]?.score || 1;
 
   return (
@@ -28,22 +30,22 @@ function ScoreResult({ data }) {
       </div>
       <div className="score-bars">
         {ranked.map(({ timeline, score }, i) => (
-          <div key={timeline} className="score-bar-row">
+          <div key={timeline || i} className="score-bar-row">
             <span className="score-bar-label" style={{ color: LANE_COLORS[i] || '#00f2ff' }}>
-              {timeline}
+              {timeline || `Timeline ${i + 1}`}
             </span>
             <div className="score-bar-track">
               <div
                 className="score-bar-fill"
                 style={{
-                  width: `${(score / maxScore) * 100}%`,
+                  width: `${((score || 0) / maxScore) * 100}%`,
                   background: LANE_COLORS[i] || '#00f2ff',
                   boxShadow: `0 0 8px ${LANE_COLORS[i] || '#00f2ff'}`,
                 }}
               />
             </div>
             <span className="score-bar-value" style={{ color: LANE_COLORS[i] || '#00f2ff' }}>
-              {score.toFixed(1)}
+              {Number(score).toFixed(1)}
             </span>
             {i === 0 && <span className="score-badge">★ BEST FIT</span>}
           </div>

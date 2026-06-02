@@ -101,17 +101,26 @@ function getFallbackLabel(node, score, groundingData) {
 function TimelineView({ data, decision }) {
   const {
     simulation_id: simulationId,
-    timelines,
-    regrets,
-    letters,
-    comparison,
-    causal_data: causalData,
-    interpretations,
-    grounding,
-  } = data;
+    timelines = {},
+    regrets = {},
+    letters = {},
+    comparison = {},
+    causal_data: causalData = {},
+    interpretations = {},
+    grounding = {},
+  } = data || {};
+
+  console.log('[TimelineView] Mounted with data:', {
+    hasTimelines: Object.keys(timelines).length > 0,
+    hasRegrets: Object.keys(regrets).length > 0,
+    hasLetters: Object.keys(letters).length > 0,
+    hasCausalData: Object.keys(causalData).length > 0,
+    hasInterpretations: Object.keys(interpretations).length > 0,
+    hasGrounding: Object.keys(grounding).length > 0,
+  });
 
   // Derive role/location from first timeline's grounding for job market panel
-  const firstGrounding = Object.values(grounding || {})[0] || {};
+  const firstGrounding = Object.values(grounding)[0] || {};
   const groundedRole = firstGrounding.role || 'software engineer';
   const groundedLocation = firstGrounding.location || 'India';
 
@@ -169,7 +178,7 @@ function TimelineView({ data, decision }) {
         color: LANE_COLORS[i] || '#00f2ff',
         scores: availableYears.map((yr) => {
           const yrKey = `Year${yr}`;
-          const score = causal[yrKey]?.happiness ?? parseEmotion(timeline[yrKey] || '');
+          const score = causal[yrKey]?.happiness ?? parseEmotion(timeline?.[yrKey] || '');
           return { year: yr, score };
         }),
       };
@@ -457,6 +466,10 @@ function TimelineView({ data, decision }) {
   const [showScorePanel, setShowScorePanel] = useState(false);
 
   const handlePivotClick = useCallback((name, description) => {
+    if (!name || !timelines?.[name]) {
+      console.warn('[TimelineView] Pivot attempted on missing timeline:', name);
+      return;
+    }
     setPivotData({
       name,
       year,
@@ -486,6 +499,16 @@ function TimelineView({ data, decision }) {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
+  const timelineEntries = Object.entries(timelines);
+
+  if (timelineEntries.length === 0) {
+    return (
+      <div className="timeline-container" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <p>No timeline data available.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="timeline-container">
 
@@ -551,9 +574,9 @@ function TimelineView({ data, decision }) {
 
       {/* Timeline lanes */}
       <div className="timelines-grid">
-        {Object.entries(timelines).map(([name, timeline], laneIdx) => {
-          const regret = regrets[name];
-          const letter = letters[name];
+        {timelineEntries.map(([name, timeline], laneIdx) => {
+          const regret = regrets?.[name];
+          const letter = letters?.[name];
           const color = LANE_COLORS[laneIdx] || '#00f2ff';
           const activeDesc = timeline[`Year${year}`] || 'No data for this year.';
           const activeCausal = causalData?.[name]?.[`Year${year}`] || null;

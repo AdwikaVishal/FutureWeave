@@ -387,20 +387,37 @@ async def job_market(
     location: str = Query("Bangalore"),
     skills: str = Query(""),
 ):
+    norm_role = role
+    norm_location = location
+    salary_range = [8, 25]
+    unemployment = 7.5
+    gdp_growth = 6.5
+    salary_source = "static_fallback"
+    macro_source = "world_bank_estimate"
+
     try:
         from data_grounding import detect_role, normalise_location
         from real_data_provider import get_ambitionbox_salary, get_worldbank_unemployment, get_worldbank_gdp_growth
         norm_location = normalise_location(location)
         norm_role = detect_role(role, {})
-        salary_range = get_ambitionbox_salary(norm_role, norm_location)
-        unemployment = get_worldbank_unemployment()
-        gdp_growth = get_worldbank_gdp_growth()
+
+        ambition_salary = get_ambitionbox_salary(norm_role, norm_location)
+        if ambition_salary:
+            salary_range = ambition_salary
+            salary_source = "ambitionbox_com"
+
+        wb_unemployment = get_worldbank_unemployment()
+        if wb_unemployment is not None:
+            unemployment = wb_unemployment
+            macro_source = "world_bank"
+
+        wb_gdp = get_worldbank_gdp_growth()
+        if wb_gdp is not None:
+            gdp_growth = wb_gdp
+            if macro_source != "world_bank":
+                macro_source = "world_bank"
     except Exception:
-        norm_role = role
-        norm_location = location
-        salary_range = [8, 25]
-        unemployment = 7.5
-        gdp_growth = 6.5
+        pass
 
     SKILL_DEMAND = {
         "python": {"growth_pct": 22, "jobs_india": 45000, "trend": "rising"},
@@ -432,6 +449,10 @@ async def job_market(
         "unemployment_pct": unemployment,
         "gdp_growth_pct": gdp_growth,
         "skill_demand": skill_insights,
+        "data_sources": {
+            "salary": salary_source,
+            "macro": macro_source,
+        },
     }
 
 

@@ -17,84 +17,132 @@ const TREND_ICON = { rising: '↑', stable: '→', unknown: '?' };
 function JobMarketPanel({ role, location, skills }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!role) return;
+    if (!role) {
+      console.log('[JobMarketPanel] No role provided, skipping fetch');
+      setLoading(false);
+      return;
+    }
+
+    console.log('[JobMarketPanel] Fetching job market data for:', { role, location, skills });
+    setLoading(true);
+    setError(null);
+
     API
       .get('/job-market', { params: { role, location, skills } })
-      .then((res) => setData(res.data))
-      .catch(() => setData(null))
+      .then((res) => {
+        console.log('[JobMarketPanel] API response:', res.data);
+        setData(res.data);
+      })
+      .catch((err) => {
+        console.error('[JobMarketPanel] API error:', err.response?.data || err.message);
+        setData(null);
+        setError(err.response?.data?.detail || err.message || 'Failed to load job market data');
+      })
       .finally(() => setLoading(false));
   }, [role, location, skills]);
 
-  if (loading) return <div className="job-market-loading">⟳ Loading job market data...</div>;
-  if (!data) return null;
+  if (loading) {
+    return <div className="job-market-loading">⟳ Loading job market data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="job-market-panel">
+        <div className="job-market-header">
+          <span className="job-market-title">📈 JOB MARKET</span>
+        </div>
+        <div className="job-market-error" style={{ padding: '1rem', color: 'var(--glow-pink)' }}>
+          ⚠ {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="job-market-panel">
+        <div className="job-market-header">
+          <span className="job-market-title">📈 JOB MARKET</span>
+        </div>
+        <div className="job-market-error" style={{ padding: '1rem', color: 'var(--text-muted)' }}>
+          No job market data available.
+        </div>
+      </div>
+    );
+  }
+
+  const ds = data.data_sources || {};
+  const salaryRange = Array.isArray(data.salary_range_lpa) ? data.salary_range_lpa : null;
+  const skillDemand = data.skill_demand || {};
 
   return (
     <div className="job-market-panel">
       <div className="job-market-header">
         <span className="job-market-title">📈 LIVE JOB MARKET</span>
         <span className="job-market-meta">
-          {data.role} · {data.location}
+          {data.role || 'Unknown role'} · {data.location || 'Unknown location'}
         </span>
       </div>
 
       <div className="job-market-stats">
-        {data.salary_range_lpa && (
+        {salaryRange && (
           <div className="jm-stat">
             <span className="jm-stat-label">Salary Range</span>
             <span className="jm-stat-value" style={{ color: 'var(--glow-cyan)' }}>
-              ₹{data.salary_range_lpa[0]}–{data.salary_range_lpa[1]} LPA
+              ₹{salaryRange[0]}–{salaryRange[1]} LPA
             </span>
-            <span className="jm-stat-source">📊 {data.data_sources.salary}</span>
+            <span className="jm-stat-source">📊 {ds.salary || 'Unknown source'}</span>
           </div>
         )}
         {data.unemployment_pct != null && (
           <div className="jm-stat">
             <span className="jm-stat-label">Unemployment</span>
             <span className="jm-stat-value" style={{ color: 'var(--glow-pink)' }}>
-              {data.unemployment_pct.toFixed(1)}%
+              {Number(data.unemployment_pct).toFixed(1)}%
             </span>
-            <span className="jm-stat-source">🌐 {data.data_sources.macro}</span>
+            <span className="jm-stat-source">🌐 {ds.macro || 'World Bank'}</span>
           </div>
         )}
         {data.gdp_growth_pct != null && (
           <div className="jm-stat">
             <span className="jm-stat-label">GDP Growth</span>
             <span className="jm-stat-value" style={{ color: '#00ff88' }}>
-              {data.gdp_growth_pct.toFixed(1)}%
+              {Number(data.gdp_growth_pct).toFixed(1)}%
             </span>
-            <span className="jm-stat-source">🌐 {data.data_sources.macro}</span>
+            <span className="jm-stat-source">🌐 {ds.macro || 'World Bank'}</span>
           </div>
         )}
-        {data.adzuna?.total_jobs && (
+        {data.adzuna?.total_jobs ? (
           <div className="jm-stat">
             <span className="jm-stat-label">Live Job Listings</span>
             <span className="jm-stat-value" style={{ color: '#ffaa00' }}>
-              {data.adzuna.total_jobs.toLocaleString()}
+              {Number(data.adzuna.total_jobs).toLocaleString()}
             </span>
             <span className="jm-stat-source">🔍 Adzuna</span>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {Object.keys(data.skill_demand || {}).length > 0 && (
+      {Object.keys(skillDemand).length > 0 && (
         <div className="jm-skills">
           <div className="jm-skills-title">SKILL DEMAND</div>
-          {Object.entries(data.skill_demand).map(([skill, info]) => (
+          {Object.entries(skillDemand).map(([skill, info]) => (
             <div key={skill} className="jm-skill-row">
               <span className="jm-skill-name">{skill}</span>
-              {info.growth_pct != null && (
+              {info && info.growth_pct != null && (
                 <span
                   className="jm-skill-growth"
                   style={{ color: TREND_COLOR[info.trend] || '#aaa' }}
                 >
-                  {TREND_ICON[info.trend]} {info.growth_pct}% YoY
+                  {TREND_ICON[info.trend] || '?'} {info.growth_pct}% YoY
                 </span>
               )}
-              {info.jobs_india && (
-                <span className="jm-skill-jobs">{info.jobs_india.toLocaleString()} jobs</span>
-              )}
+              {info?.jobs_india ? (
+                <span className="jm-skill-jobs">{Number(info.jobs_india).toLocaleString()} jobs</span>
+              ) : null}
             </div>
           ))}
         </div>
