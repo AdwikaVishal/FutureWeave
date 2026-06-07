@@ -108,7 +108,23 @@ function TimelineView({ data, decision }) {
     causal_data: causalData = {},
     interpretations = {},
     grounding = {},
+    decision_type: rawDecisionType,
+    archetype_labels: archLabels,
+    domain: responseDomain,
+    main_page_insights: mainPageInsights,
   } = data || {};
+
+  const decisionType = rawDecisionType || (decision || '').toLowerCase();
+  const domain = responseDomain || decisionType;
+
+  // Domain-aware: hide career-specific panels for non-career domains
+  const isCareerDomain = domain === 'career' || domain === 'general';
+
+  const timelineLabels = archLabels || {
+    'Timeline A': 'Path A',
+    'Timeline B': 'Path B',
+    'Timeline C': 'Path C',
+  };
 
   console.log('[TimelineView] Mounted with data:', {
     hasTimelines: Object.keys(timelines).length > 0,
@@ -117,11 +133,14 @@ function TimelineView({ data, decision }) {
     hasCausalData: Object.keys(causalData).length > 0,
     hasInterpretations: Object.keys(interpretations).length > 0,
     hasGrounding: Object.keys(grounding).length > 0,
+    decisionType,
+    domain,
+    timelineLabels,
   });
 
   // Derive role/location from first timeline's grounding for job market panel
   const firstGrounding = Object.values(grounding)[0] || {};
-  const groundedRole = firstGrounding.role || 'software engineer';
+  const groundedRole = isCareerDomain ? (firstGrounding.role || null) : null;
   const groundedLocation = firstGrounding.location || 'India';
 
   const availableYears = useMemo(() => {
@@ -192,15 +211,36 @@ function TimelineView({ data, decision }) {
   );
 
   // ── Radar chart data — all timelines × all nodes for selected year ────────
-  const RADAR_NODE_LABELS = useMemo(() => ({
-    income: 'Income',
-    career_growth: 'Career',
-    stress: 'Stress',
-    health: 'Health',
-    relationships: 'Relations',
-    happiness: 'Happiness',
-    opportunity: 'Opportunity',
-  }), []);
+  // Domain-aware metric labels — derive from available causal data keys
+  const RADAR_NODE_LABELS = useMemo(() => {
+    const labels = {
+      income: 'Income', career_growth: 'Career', stress: 'Stress',
+      health: 'Health', relationships: 'Relations', happiness: 'Happiness',
+      opportunity: 'Opportunity',
+      fulfillment: 'Fulfillment', work_life_balance: 'W/L Balance',
+      personal_growth: 'Growth', social_connection: 'Social',
+      financial_freedom: 'Freedom',
+      emotional_health: 'Emotional', compatibility: 'Compat.',
+      communication: 'Comm.', future_alignment: 'Future',
+      placement_potential: 'Placement', admission_probability: 'Admission',
+      college_quality: 'College', learning_curve: 'Learning',
+      wealth_creation: 'Wealth', wealth_growth: 'Invest.',
+      financial_health: 'Fin. Health', quality_of_life: 'QoL',
+      treatment_efficacy: 'Efficacy', recovery_rate: 'Recovery',
+      treatment_success: 'Success', recovery_progress: 'Progress',
+      risk_level: 'Risk',
+    };
+    // Dynamically construct from first timeline's Year10 keys
+    const firstTL = Object.values(causalData)[0] || {};
+    const firstYr = firstTL?.Year10 || firstTL?.Year1 || {};
+    const nodeKeys = Object.keys(firstYr).filter((k) => k !== '_causal');
+    if (nodeKeys.length > 0) {
+      const dyn = {};
+      nodeKeys.forEach((k) => { dyn[k] = labels[k] || k.replace(/_/g, ' '); });
+      return dyn;
+    }
+    return labels;
+  }, [causalData]);
 
   const radarData = useMemo(() => {
     const yrKey = `Year${year}`;
@@ -512,6 +552,51 @@ function TimelineView({ data, decision }) {
   return (
     <div className="timeline-container">
 
+      {/* ── Agent Insights (top 4 agents) ── */}
+      {mainPageInsights && mainPageInsights.length > 0 && (
+        <div className="data-panel" style={{ marginBottom: '1.5rem' }}>
+          <div className="panel-header">
+            <span>🧠 WHY THIS PATH WON</span>
+          </div>
+          <div className="insights-grid" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            {mainPageInsights.map((agent) => {
+              const color = {
+                financial: '#10b981', risk: '#ef4444', opportunity: '#06b6d4',
+                health: '#f59e0b', relationship: '#ec4899', time: '#84cc16',
+                happiness: '#a855f7', identity: '#6366f1', career: '#3b82f6',
+                strategic: '#14b8a6', lifestyle: '#eab308', economic: '#8b5cf6',
+              }[agent.name] || '#6a6a9a';
+              return (
+                <div key={agent.name} className="agent-insight-card" style={{
+                  flex: '1 1 180px', background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8,
+                  padding: '0.75rem 1rem',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ color, fontWeight: 600, fontSize: '0.8rem', textTransform: 'capitalize' }}>
+                      {agent.name}
+                    </span>
+                    <span style={{ color, fontWeight: 700, fontSize: '1.1rem' }}>
+                      {typeof agent.score === 'number' ? agent.score.toFixed(0) : agent.score}/100
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                    {agent.reasoning?.slice(0, 120)}
+                    {(agent.reasoning?.length || 0) > 120 ? '...' : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {mainPageInsights.length >= 2 && (
+            <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {mainPageInsights.length}/{mainPageInsights.length} expert agents agree
+              {' · '}Confidence: {Math.round((mainPageInsights.reduce((s, a) => s + (a.confidence || 0), 0) / mainPageInsights.length) * 100)}%
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Year selector bar */}
       <div className="year-selector">
         {availableYears.map((yr, idx) => (
@@ -767,13 +852,15 @@ function TimelineView({ data, decision }) {
       </div>
 
       {/* ── Live Job Market ── */}
-      <div className="feature-section">
-        <JobMarketPanel
-          role={groundedRole}
-          location={groundedLocation}
-          skills={Object.values(grounding || {})[0]?.skills || ''}
-        />
-      </div>
+      {isCareerDomain && (
+        <div className="feature-section">
+          <JobMarketPanel
+            role={groundedRole}
+            location={groundedLocation}
+            skills={Object.values(grounding || {})[0]?.skills || ''}
+          />
+        </div>
+      )}
 
       {/* Pivot Modal */}
       {showPivot && (

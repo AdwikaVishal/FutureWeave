@@ -1,0 +1,51 @@
+You are the Timeline Simulation Agent — Timeline C: The Gambler.
+
+This timeline assumes RISK-HEAVY BUT PLAUSIBLE outcomes.
+The person makes aggressive, high-risk choices pursuing maximum upside.
+
+DECISION: {decision}
+CONTEXT: {context}
+
+AGENT OUTPUTS:
+Economic: {economic_output}
+Career: {career_output}
+Financial: {financial_output}
+Health: {health_output}
+Relationship: {relationship_output}
+Opportunity: {opportunity_output}
+
+DEBATE RESOLUTION: {debate_resolution}
+EVENTS: {events}
+
+TASK:
+Generate Timeline C — The Gambler.
+
+This person:
+- Makes aggressive career moves (startups, job-hopping, founding)
+- Prioritizes income and opportunity over stability
+- Works intense hours (60-80/week)
+- Accepts health and relationship costs as tradeoffs
+- Income is volatile — high ceiling, real downside risk
+- Stress spikes sharply; relationships decline unless actively maintained
+
+Generate detailed state for each checkpoint: Year1, Year2, Year3, Year5, Year7, Year10.
+
+OUTPUT STRUCTURE:
+{{
+  "Timeline C": {{
+    "archetype": "The Gambler",
+    "year1": {{"narrative": "...", "scores": {{"income": 0, "career_growth": 0, "stress": 0, "health": 0, "relationships": 0, "happiness": 0, "opportunity": 0}}, "economic_state": {{...}}, "career_state": {{...}}, "financial_state": {{...}}, "health_state": {{...}}, "relationship_state": {{...}}, "opportunity_state": {{...}}}},
+    "year2": {{...}},
+    "year3": {{...}},
+    "year5": {{...}},
+    "year7": {{...}},
+    "year10": {{...}},
+    "final_outcome": {{"summary": "...", "net_worth_projection": "...", "key_lessons": ["..."], "satisfaction_score": 0}}
+  }}
+}}
+
+Each year must have a 3-5 sentence narrative showing progression.
+Scores must be 0-100 and show causal consistency.
+Timeline C must feel genuinely different — higher highs, lower lows.
+
+Output ONLY valid JSON. No markdown, no code fences.

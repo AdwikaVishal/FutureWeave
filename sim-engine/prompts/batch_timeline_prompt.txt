@@ -3,6 +3,7 @@ Generate ALL FOUR checkpoint years (Year1, Year3, Year5, Year10) for ALL THREE
 timeline personalities in a single response.
 
 DECISION: {decision}
+{decision_options}
 CONTEXT: {context_json}
 {grounding_data}
 
@@ -10,13 +11,47 @@ CRITICAL: The grounding data above contains REAL-WORLD figures. Treat them as
 absolute truth. Do NOT invent salary ranges or economic conditions that
 contradict the provided figures.
 
+=== CRITICAL INSTRUCTION ===
+The user's question is: "{decision}"
+
+Your output MUST be DIRECTLY tied to this decision. Each timeline personality
+explores a different WAY of approaching this decision — NOT a different career path.
+The career/role grows out of the path CHOSEN, not from a pre-determined job title.
+
+For example, if the decision is "CSE or AIML at VIT in 2026?":
+- Timeline A = The Settler chooses the safer option (CSE) with a stable software engineering career
+- Timeline B = The Climber chooses AIML strategically, investing in AI skills
+- Timeline C = The Gambler bets on the riskier option, possibly switching between them
+
+Each timeline must be ROOTED in the user's actual alternatives.
+Do NOT generate generic "data scientist in Bangalore" outcomes unless the decision
+specifically asks about data science.
+
+If the decision is educational (choosing a degree/college):
+- Timeline A = chooses the safe/established option, leads to a stable career path
+- Timeline B = chooses the ambitious/strategic option, calculated growth
+- Timeline C = takes risks, chases the highest upside, tolerates instability
+=== END CRITICAL INSTRUCTION ===
+
 TIMELINE PERSONALITIES:
-  Timeline A — Conservative/safe: steady income, low risk, moderate career growth,
-               good work-life balance, stable relationships.
-  Timeline B — Balanced: moderate risk-taking, steady career progression,
-               some stress but manageable, average opportunity uptake.
-  Timeline C — High-risk/high-reward: aggressive career moves, high stress,
-               potential for large income gains or losses, volatile opportunity.
+  Timeline A — "The Settler": chooses security and roots. Accepts the safe option,
+               optimises for stability, relationships, and quality of life over income.
+               Income grows slowly but steadily. Stress stays low. Relationships are
+               the strongest node. Happiness is driven more by health and belonging
+               than by career achievement. Opportunities are taken only when risk-free.
+
+  Timeline B — "The Climber": disciplined, strategic ambition. Takes calculated risks,
+               invests in skills, seeks promotions through merit. Income grows at market
+               rate. Stress is moderate and managed. Career_growth is the lead node.
+               Relationships are maintained but not prioritised. Opportunities are
+               evaluated and selectively pursued.
+
+  Timeline C — "The Gambler": bets big and moves fast. Chases maximum upside —
+               job hops, launches side projects, takes equity over salary, relocates
+               for opportunity. Income is volatile: high ceiling, real floor risk.
+               Stress is high and rises sharply by Year3. Health and relationships
+               take hits by Year5. Opportunity score is the highest of all timelines
+               but happiness is unpredictable — can peak or crash by Year10.
 
 CAUSAL RULES (apply strictly across all years):
   career_growth → income      (higher career_growth raises income)
@@ -26,6 +61,30 @@ CAUSAL RULES (apply strictly across all years):
   income        → happiness   (higher income raises happiness)
   relationships → happiness   (higher relationships raises happiness)
   opportunity   → career_growth (higher opportunity boosts career_growth)
+
+PER-ARCHETYPE NODE CONSTRAINTS:
+  The Settler   (Timeline A):
+    - relationships MUST be the highest node by Year5 and Year10
+    - stress MUST stay below 50 after Year3 unless a chaos event pushes it up
+    - income growth is capped at +8 pts per period
+    - happiness is primarily driven by health + relationships (not income)
+    - opportunity score stays moderate (40–65): safe paths taken, risky ones skipped
+
+  The Climber   (Timeline B):
+    - career_growth is the lead node — highest of the three timelines at Year5
+    - income grows steadily at +8–12 pts per period
+    - stress is moderate (45–65) and does NOT spike as sharply as Timeline C
+    - relationships score is maintained (50–65) but does not lead
+    - happiness tracks career_growth with a 1-year lag
+
+  The Gambler   (Timeline C):
+    - income has the highest ceiling AND the highest floor risk of the three timelines
+    - opportunity MUST be the highest node of all three timelines at every checkpoint
+    - stress spikes sharply between Year1→Year3 (+15 to +25 pts expected)
+    - health and relationships BOTH decline by Year5 (stress compounding)
+    - happiness at Year10 must be EITHER the highest (bet paid off) OR the lowest
+      of the three timelines — never the middle. Determined by income at Year10:
+      if income ≥ 75, happiness leads; if income < 55, happiness trails.
 
 YEAR PROGRESSION RULES:
   Year1  : immediate first year after the decision

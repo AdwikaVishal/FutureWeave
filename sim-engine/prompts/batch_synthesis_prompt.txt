@@ -10,37 +10,50 @@ TIMELINES — each has a personality, year-by-year narratives, and causal scores
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CRITICAL RULES — READ BEFORE WRITING:
-1. Each timeline has a DIFFERENT personality (conservative / balanced / high-risk).
-   The regrets and letters MUST reflect that personality. Do NOT write the same
-   regret for all three timelines.
-2. Use the ACTUAL causal scores provided. If Timeline C has income=85 and stress=80,
-   the letter must mention high income AND burnout. If Timeline A has income=45 and
-   stress=35, the letter must reflect modest income and calm life.
-3. The comparison must name SPECIFIC score differences — not generic statements.
+1. THREE DISTINCT ARCHETYPES. Each timeline has a named personality:
+     Timeline A = The Settler  : chose roots, security, relationships over ambition
+     Timeline B = The Climber  : strategic, merit-based, career-growth-led
+     Timeline C = The Gambler  : volatile, high-upside, health and relationships paid the price
+   The regrets and letters MUST reflect the specific archetype. Writing the same
+   emotional tone for The Settler and The Gambler is a failure.
+
+2. USE THE ACTUAL CAUSAL SCORES. If Timeline C has stress=82 at Year5, the letter
+   must reference burnout. If Timeline A has relationships=78 at Year10, the letter
+   must acknowledge the richness of that. Never describe a score you don’t have data for.
+
+3. REGRETS ARE ARCHETYPE-SPECIFIC:
+   - The Settler’s regret is about roads not taken, ambition suppressed, identity unlived
+   - The Climber’s regret is about the half-measures, the founding team they didn’t join,
+     the unreasonable bet they never made
+   - The Gambler’s regret is always relational — the people, the presence, the moments missed
+
 4. Letters must be 150–200 words, written in second person ("you"), with at least
    one specific number (LPA, score, year) from the causal data.
+   The Settler’s letter is warm and slightly wistful.
+   The Climber’s letter is measured and self-aware.
+   The Gambler’s letter is raw and unsparing.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TASK A — REGRET ANALYSIS (one per timeline, MUST differ across timelines)
-For each timeline identify what is LOST given that timeline's specific path.
-  lost_opportunity : ONE concrete opportunity missed — specific to this timeline's personality
-  missed_identity  : ONE version of the person that never happens — tied to this path's trade-offs
-  emotional_cost   : ONE specific recurring emotional moment — grounded in this timeline's scores
+For each timeline identify what is LOST given that timeline’s specific path.
+  lost_opportunity : ONE concrete opportunity missed — specific to the archetype’s trade-offs
+  missed_identity  : ONE version of the person that never happens — grounded in this path
+  emotional_cost   : ONE specific recurring emotional moment — tied to actual score pattern
 
 TASK B — FUTURE SELF LETTER (one per timeline, 150–200 words each)
 Write a first-person letter from the Year-10 self to the user today.
   - Address them as "you"
-  - Reference the timeline's ACTUAL Year-10 scores (income, happiness, stress)
-  - Include one specific memory tied to this timeline's personality
-  - Include one thing that was harder than expected — specific to this path
-  - One concrete piece of advice that ONLY makes sense for this timeline
-  - Natural, reflective voice — not motivational poster language
-  - Timeline A letter must sound DIFFERENT from Timeline C letter
+  - Reference the timeline’s ACTUAL Year-10 income, happiness, and stress scores
+  - One specific memory tied to this archetype’s dominant node (relationships for A,
+    career_growth for B, opportunity/stress for C)
+  - One thing that was harder than expected — specific to this archetype’s trade-offs
+  - One concrete piece of advice that ONLY makes sense for this archetype
+  - Tone: Settler = warm/wistful, Climber = measured/self-aware, Gambler = raw/unsparing
 
 TASK C — CROSS-TIMELINE COMPARISON (one block)
-  common_patterns : what is genuinely true across all three paths (use actual scores)
-  key_differences : the BIGGEST divergence — name specific timelines and specific nodes
-  hinge_point     : the single most important factor — name the year and node where paths diverge most
+  common_patterns : what is genuinely true across all three paths (reference actual shared scores)
+  key_differences : the BIGGEST divergence — name the timelines, the nodes, and the year
+  hinge_point     : the single year and node where the three paths diverge most sharply
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Output ONLY valid JSON matching this exact structure (no extra keys, no markdown):

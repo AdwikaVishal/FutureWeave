@@ -1,35 +1,21 @@
 module.exports = {
-  env: {
-    es6: true,
-    jest: true,
-    browser: true
-  },
+  root: true,
+  env: { es6: true, jest: true, browser: true },
   extends: ["airbnb"],
-  globals: {
-    Atomics: "readonly",
-    SharedArrayBuffer: "readonly",
-    __DEV__: true
-  },
   parserOptions: {
-    ecmaFeatures: {
-      jsx: true
-    },
+    ecmaFeatures: { jsx: true },
     ecmaVersion: 2020,
-    sourceType: "module"
+    sourceType: "module",
   },
   plugins: ["react", "jsx-a11y", "import", "import-helpers", "react-hooks"],
   rules: {
     "react/jsx-filename-extension": ["error", { extensions: [".js", ".jsx"] }],
     "import/prefer-default-export": "off",
-    "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     "react/jsx-one-expression-per-line": "off",
     "global-require": "off",
-    "react-native/no-raw-text": "off",
     "no-param-reassign": "off",
     "no-underscore-dangle": "off",
-    "no-console": ["error", { allow: ["tron"] }],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
     "no-console": "off",
     "react/jsx-props-no-spreading": "off",
     "react/prop-types": "off",
@@ -40,17 +26,22 @@ module.exports = {
     "react/self-closing-comp": "off",
     "react/button-has-type": "off",
     "no-multiple-empty-lines": "off",
-    "import-helpers/order-imports": [
-      "warn",
-      {
-        newlinesBetween: "always",
-        groups: [
-          "module",
-          "/^~/",
-          ["parent", "sibling", "index"],
-        ],
-        alphabetize: { order: "asc", ignoreCase: true }
-      }
-    ],
+    "max-len": "off",
+    "react/jsx-first-prop-new-line": "off",
+    "react/jsx-max-props-per-line": "off",
+    "object-property-newline": "off",
+    "react/jsx-closing-bracket-location": "off",
+    "no-nested-ternary": "off",
+    "react/no-array-index-key": "off",
+    "react/no-unescaped-entities": "off",
+    "no-unused-expressions": "warn",
+    "no-sparse-arrays": "off",
+    "no-unsafe-optional-chaining": "warn",
+    "jsx-a11y/label-has-associated-control": "off",
+    "import/order": "off",
+    "import-helpers/order-imports": "off",
+    "react/jsx-no-constructed-context-values": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
   },
 };

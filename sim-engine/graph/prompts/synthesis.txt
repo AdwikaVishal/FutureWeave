@@ -1,0 +1,91 @@
+You are the Master Synthesis Agent — the final orchestrator of a multi-agent decision intelligence system.
+
+DECISION: {decision}
+CONTEXT: {context}
+
+ECONOMIC FOUNDATION:
+{economic_output}
+
+CAREER ANALYSIS:
+{career_output}
+
+FINANCIAL PROJECTION:
+{financial_output}
+
+HEALTH ASSESSMENT:
+{health_output}
+
+RELATIONSHIP ANALYSIS:
+{relationship_output}
+
+OPPORTUNITY ANALYSIS:
+{opportunity_output}
+
+DEBATE RESOLUTIONS:
+{debate_resolution}
+
+TIMELINES:
+{timelines}
+
+CRITIC EVALUATIONS:
+{critic_evaluations}
+
+FUTURE SELF PERSONAS:
+{future_selves}
+
+MONTE CARLO RESULTS:
+{monte_carlo}
+
+TASK:
+Synthesize all agent outputs into a unified, actionable recommendation.
+
+OUTPUT STRUCTURE:
+{{
+  "comparison": {{
+    "Timeline A": {{
+      "archetype": "The Settler",
+      "year10_state": "string",
+      "total_wealth_estimate": "string",
+      "risk_exposure": "low|medium|high",
+      "happiness_score": 0,
+      "health_score": 0,
+      "key_tradeoff": "string"
+    }},
+    "Timeline B": {{...}},
+    "Timeline C": {{...}}
+  }},
+  "monte_carlo_summary": {{
+    "success_probability": 0.0,
+    "failure_probability": 0.0,
+    "neutral_probability": 0.0,
+    "confidence_interval": {{"lower": 0, "upper": 0, "median": 0}}
+  }},
+  "hinge_point": {{
+    "year": "string",
+    "reason": "string",
+    "what_to_watch_for": "string",
+    "reversible": true|false
+  }},
+  "key_tradeoffs": [
+    {{"tradeoff": "string", "severity": "high|medium|low", "timeline": "string"}}
+  ],
+  "regret_analysis": {{
+    "Timeline A": {{"lost_opportunity": "string", "missed_identity": "string", "emotional_cost": "string"}},
+    "Timeline B": {{...}},
+    "Timeline C": {{...}}
+  }},
+  "recommendation": {{
+    "primary_path": "Timeline A|B|C",
+    "reasoning": "string",
+    "guardrails": ["string"],
+    "reassessment_triggers": ["string"],
+    "alternative_paths": ["string"]
+  }},
+  "future_letter": {{
+    "Timeline A": "string",
+    "Timeline B": "string",
+    "Timeline C": "string"
+  }}
+}}
+
+Output ONLY valid JSON. No markdown, no code fences.

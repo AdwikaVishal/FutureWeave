@@ -22,6 +22,9 @@ from datetime import datetime
 from llm_client import call_llm
 from llm_cache import get_cache
 from quota_manager import get_quota_manager
+from decision_parser import parse_decision, format_options_for_prompt
+from input_validator import safe_template_substitute
+from domains import get_metrics_by_type, get_domain
 
 logger = logging.getLogger(__name__)
 
@@ -55,41 +58,33 @@ YEAR_GAPS  = {"Year1": 0, "Year3": 2, "Year5": 2, "Year10": 5}
 TIMELINE_KEYS = ["Timeline A", "Timeline B", "Timeline C"]
 TIMELINE_PERSONALITIES = {
     "Timeline A": (
-        "Conservative/safe path: steady income, low risk, moderate career growth, "
-        "good work-life balance, stable relationships."
+        "The Settler: chooses security and roots. Optimises for stability, relationships, "
+        "and quality of life over income. Stress stays low, relationships lead, "
+        "happiness driven by health and belonging. Opportunities taken only when risk-free."
     ),
     "Timeline B": (
-        "Balanced path: moderate risk-taking, steady career progression, "
-        "some stress but manageable, average opportunity uptake."
+        "The Climber: disciplined, strategic ambition. Takes calculated risks, invests in skills, "
+        "seeks promotions through merit. Income grows at market rate. Stress is moderate and managed. "
+        "Career_growth is the lead node. Opportunities evaluated and selectively pursued."
     ),
     "Timeline C": (
-        "High-risk/high-reward path: aggressive career moves, high stress, "
-        "potential for large income gains or losses, volatile opportunity."
+        "The Gambler: bets big and moves fast. Job hops, launches side projects, chases equity. "
+        "Income is volatile — high ceiling, real floor risk. Stress spikes sharply by Year3. "
+        "Health and relationships decline by Year5. Opportunity is the highest node. "
+        "Happiness at Year10 either leads or trails all timelines — never middle."
     ),
 }
 
 # Personality bias for deterministic fallback
-_PERSONALITY_BIAS = {"A": -3, "B": 0, "C": +5}
+# A=Settler: low stress bias, high relationships; B=Climber: career-forward; C=Gambler: volatile
+_PERSONALITY_BIAS = {"A": -5, "B": +2, "C": +8}
 
-_FALLBACK_ANCHORS = {
-    "income_anchors": {
-        10: 2.0, 25: 4.0, 40: 6.0, 55: 10.0, 70: 18.0, 85: 30.0, 100: 50.0,
-    },
-    "opportunity_base": 82,
-    "psychographic_bases": {
-        "stress": 55, "health": 65, "relationships": 60, "happiness": 52,
-    },
-    "prompt_block": (
-        "REAL-WORLD GROUNDING (fallback defaults — India average):\n"
-        "  INCOME SCORE SCALE: 25→4 LPA, 40→6 LPA, 55→10 LPA, 70→18 LPA, 85→30 LPA\n"
-        "  OPPORTUNITY BASE: 82/100\n"
-        "  Psychographic bases: stress=55, health=65, relationships=60, happiness=52\n"
-    ),
-    "salary_entry_lpa":  (3, 7),
-    "salary_mid_lpa":    (7, 15),
-    "salary_senior_lpa": (15, 35),
+# Per-node overrides applied in _deterministic_all_years for archetype fidelity
+_PERSONALITY_NODE_BIAS = {
+    "A": {"stress": -12, "relationships": +12, "opportunity": -8,  "career_growth": -5},
+    "B": {"stress":  +2, "relationships":   0, "opportunity": +5,  "career_growth": +8},
+    "C": {"stress": +18, "relationships": -10, "opportunity": +15, "career_growth": +6},
 }
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -128,10 +123,10 @@ def _validate_causal_scores(all_causal: dict) -> dict:
                 if not isinstance(val, (int, float)) or val < 0 or val > 100:
                     logger.warning("[Timeline] Invalid %s=%s in %s/%s — clamping to 50", node, val, tl_key, yr)
                     nodes[node] = 50
-                # Income should never be 0 for a working professional
+                # Income should never collapse to 0 for a working professional.
                 if node == "income" and nodes[node] < 5:
-                    logger.warning("[Timeline] Degenerate income=%s in %s/%s — setting to 25", nodes[node], tl_key, yr)
-                    nodes[node] = 25
+                    logger.warning("[Timeline] Degenerate income=%s in %s/%s — clamping to 5", nodes[node], tl_key, yr)
+                    nodes[node] = 5
                 # Stress of exactly 0 is unrealistic
                 if node == "stress" and nodes[node] == 0:
                     nodes[node] = 20
@@ -139,31 +134,57 @@ def _validate_causal_scores(all_causal: dict) -> dict:
 
 
 def _apply_chaos_deltas(scores: dict, chaos_events: list, year: str) -> dict:
+    """Apply deterministic chaos deltas without crashing on malformed event payloads."""
     result = dict(scores)
-    for event in chaos_events:
-        if event.get("year") == year:
-            for node, delta in event.get("node_deltas", {}).items():
-                if node in result:
-                    result[node] = _clamp(result[node] + delta)
+
+    if isinstance(chaos_events, dict):
+        chaos_events = chaos_events.get("events", []) or chaos_events.get("items", [])
+
+    for event in chaos_events or []:
+        if not isinstance(event, dict):
+            logger.warning("[Timeline] Ignoring non-dict chaos event for %s: %r", year, event)
+            continue
+
+        event_year = event.get("year") or event.get("Year")
+        if isinstance(event_year, int):
+            event_year = f"Year{event_year}"
+
+        if event_year != year:
+            continue
+
+        node_deltas = event.get("node_deltas") or event.get("impact", {})
+        if not isinstance(node_deltas, dict):
+            logger.warning("[Timeline] Invalid node_deltas for %s: %r", year, node_deltas)
+            continue
+
+        for node, delta in node_deltas.items():
+            if node in result and isinstance(delta, (int, float)):
+                new_val = result[node] + delta
+                if node == "income" and new_val < 5:
+                    logger.warning("[Timeline] Chaos would set income=%.1f — clamping to 5", new_val)
+                    new_val = 5
+                result[node] = _clamp(new_val)
+
     return result
 
 
-def _score_to_lpa_safe(score: int, anchors: dict) -> float:
-    if DATA_GROUNDING_AVAILABLE and "salary_entry_lpa" in anchors:
-        return score_to_lpa(
-            score,
-            anchors["salary_entry_lpa"],
-            anchors["salary_mid_lpa"],
-            anchors["salary_senior_lpa"],
-        )
-    pts = sorted(anchors["income_anchors"].items())
-    for i in range(len(pts) - 1):
-        s0, v0 = pts[i]
-        s1, v1 = pts[i + 1]
-        if s0 <= score <= s1:
-            t = (score - s0) / (s1 - s0)
-            return round(v0 + t * (v1 - v0), 1)
-    return pts[-1][1]
+def _score_to_lpa_safe(score: int, anchors: dict) -> float | None:
+    entry = anchors.get("salary_entry_lpa")
+    mid = anchors.get("salary_mid_lpa")
+    senior = anchors.get("salary_senior_lpa")
+    if entry and mid and senior:
+        return score_to_lpa(score, entry, mid, senior)
+    income_anchors = anchors.get("income_anchors")
+    if income_anchors and isinstance(income_anchors, dict):
+        pts = sorted(income_anchors.items())
+        for i in range(len(pts) - 1):
+            s0, v0 = pts[i]
+            s1, v1 = pts[i + 1]
+            if s0 <= score <= s1:
+                t = (score - s0) / (s1 - s0)
+                return round(v0 + t * (v1 - v0), 1)
+        return pts[-1][1]
+    return None
 
 
 def _get_anchors(decision: str, context: dict) -> dict:
@@ -178,8 +199,16 @@ def _get_anchors(decision: str, context: dict) -> dict:
             anchors["prompt_block"] = anchors["prompt_block"] + "\n" + cvars["computed_block"]
             return anchors
         except Exception as exc:
-            logger.warning("[Timeline] Grounding failed: %s — using fallback", exc)
-    return dict(_FALLBACK_ANCHORS)
+            logger.warning("[Timeline] Grounding failed: %s — returning empty anchors (no defaults)", exc)
+    return {
+        "income_anchors": None,
+        "opportunity_base": 50,
+        "psychographic_bases": {"stress": 55, "health": 65, "relationships": 60, "happiness": 52},
+        "prompt_block": "WARNING: No live data available. Income estimates cannot be computed.",
+        "salary_entry_lpa": None,
+        "salary_mid_lpa": None,
+        "salary_senior_lpa": None,
+    }
 
 
 # ── Deterministic causal transition ──────────────────────────────────────────
@@ -187,9 +216,11 @@ def _get_anchors(decision: str, context: dict) -> dict:
 def _causal_transition(prev: dict, year_gap: int, personality_key: str) -> dict:
     """Pure-math score evolution — no LLM required."""
     bias = _PERSONALITY_BIAS.get(personality_key, 0)
+    node_bias = _PERSONALITY_NODE_BIAS.get(personality_key, {})
     next_scores = {}
     for node in NODES:
-        drift = random.uniform(-4, 4) + bias * 0.3
+        nb = node_bias.get(node, 0)
+        drift = random.uniform(-4, 4) + bias * 0.3 + nb * 0.2
         next_scores[node] = prev.get(node, 50) + drift * year_gap
     for parent, child, weight in CAUSAL_EDGES:
         influence = (prev.get(parent, 50) - 50) * weight * year_gap * 0.4
@@ -201,24 +232,86 @@ def _deterministic_all_years(anchors: dict) -> dict:
     """
     Build all 3 timelines × 4 years using only _causal_transition.
     Used in offline mode or as fallback when the LLM call fails.
+
+    Archetype starting conditions:
+      A (Settler)  : low stress, high relationships, moderate income
+      B (Climber)  : moderate stress, high career_growth, standard income
+      C (Gambler)  : high stress, high opportunity, volatile income
     """
     cvars = anchors.get("_computed", {})
     stress_base = cvars.get("stress_score", 55)
-    income_base = 30  # entry-level score
+    decision_type = anchors.get("_decision_type", "").lower()
+    domain_id = get_domain(decision_type).value
+    metrics = get_metrics_by_type(decision_type)
+    has_salary = anchors.get("salary_entry_lpa") is not None
+
+    if domain_id in ("education", "relationship", "health", "lifestyle") or not has_salary:
+        income_base = 60
+        _ARCHETYPE_YEAR1 = {
+            "A": {
+                "income":        _clamp(income_base - 5),
+                "career_growth": _clamp(45),
+                "stress":        _clamp(max(20, stress_base - 12)),
+                "health":        _clamp(70),
+                "relationships": _clamp(68),
+                "happiness":     _clamp(60),
+                "opportunity":   _clamp(anchors.get("opportunity_base", 82) - 8),
+            },
+            "B": {
+                "income":        _clamp(income_base + 3),
+                "career_growth": _clamp(55),
+                "stress":        _clamp(stress_base + 3),
+                "health":        _clamp(62),
+                "relationships": _clamp(55),
+                "happiness":     _clamp(56),
+                "opportunity":   _clamp(anchors.get("opportunity_base", 82) + 5),
+            },
+            "C": {
+                "income":        _clamp(income_base + 8),
+                "career_growth": _clamp(60),
+                "stress":        _clamp(stress_base + 15),
+                "health":        _clamp(55),
+                "relationships": _clamp(45),
+                "happiness":     _clamp(48),
+                "opportunity":   _clamp(anchors.get("opportunity_base", 82) + 16),
+            },
+        }
+    else:
+        income_base = 30
+        _ARCHETYPE_YEAR1 = {
+            "A": {
+                "income":        _clamp(income_base - 3),
+                "career_growth": _clamp(38),
+                "stress":        _clamp(max(20, stress_base - 14)),
+                "health":        _clamp(72),
+                "relationships": _clamp(72),
+                "happiness":     _clamp(62),
+                "opportunity":   _clamp(anchors.get("opportunity_base", 82) - 10),
+            },
+            "B": {
+                "income":        _clamp(income_base + 2),
+                "career_growth": _clamp(52),
+                "stress":        _clamp(stress_base + 2),
+                "health":        _clamp(64),
+                "relationships": _clamp(58),
+                "happiness":     _clamp(54),
+                "opportunity":   _clamp(anchors.get("opportunity_base", 82) + 3),
+            },
+            "C": {
+                "income":        _clamp(income_base + 6),
+                "career_growth": _clamp(58),
+                "stress":        _clamp(stress_base + 16),
+                "health":        _clamp(58),
+                "relationships": _clamp(48),
+                "happiness":     _clamp(50),
+                "opportunity":   _clamp(anchors.get("opportunity_base", 82) + 14),
+            },
+        }
 
     result = {}
     for tl_key in TIMELINE_KEYS:
         pk = tl_key[-1]   # "A", "B", "C"
-        bias = _PERSONALITY_BIAS.get(pk, 0)
-        year1 = {
-            "income":       _clamp(income_base + bias),
-            "career_growth": _clamp(45 + bias * 2),
-            "stress":        _clamp(stress_base + bias),
-            "health":        _clamp(65 - bias),
-            "relationships": 60,
-            "happiness":     _clamp(52 + bias),
-            "opportunity":   _clamp(anchors.get("opportunity_base", 82) + bias),
-        }
+        year1 = _ARCHETYPE_YEAR1[pk]
         causal = {"Year1": year1}
         for prev_yr, next_yr in [("Year1", "Year3"), ("Year3", "Year5"), ("Year5", "Year10")]:
             causal[next_yr] = _causal_transition(causal[prev_yr], YEAR_GAPS[next_yr], pk)
@@ -241,7 +334,7 @@ def _batch_generate_causal(decision: str, context: dict, anchors: dict) -> dict:
     grounding = anchors.get("_grounding", {})
     cache_key = cache.make_key(
         decision,
-        json.dumps(context, sort_keys=True),
+        json.dumps(context, sort_keys=True, default=str),
         str(grounding.get("salary_entry_lpa")),
         str(grounding.get("location")),
     )
@@ -255,17 +348,30 @@ def _batch_generate_causal(decision: str, context: dict, anchors: dict) -> dict:
         logger.info("[Timeline] Quota mode '%s' — using deterministic fallback", qm.mode)
         return _deterministic_all_years(anchors)
 
+    # Parse decision into structured options
+    parsed_decision = parse_decision(decision)
+    logger.info("[Timeline] Parsed decision: question=%s options=%s type=%s confidence=%d",
+                parsed_decision.question[:60], parsed_decision.options,
+                parsed_decision.decision_type, parsed_decision.confidence)
+    decision_options_block = format_options_for_prompt(parsed_decision)
+
     template = _load_prompt("batch_timeline_prompt.txt")
-    prompt = (
-        template
-        .replace("{decision}",     decision)
-        .replace("{context_json}", json.dumps(context, indent=2))
-        .replace("{grounding_data}", anchors["prompt_block"])
+    prompt = safe_template_substitute(
+        template,
+        decision=decision,
+        decision_options=decision_options_block,
+        context_json=json.dumps(context, indent=2, default=str),
+        grounding_data=anchors["prompt_block"],
     )
+
+    # Log the exact prompt being sent
+    logger.info("[Timeline] === LLM PROMPT ===\n%s\n=== END PROMPT ===", prompt[:2000])
 
     try:
         raw = call_llm(prompt, temperature=0.65)
         qm.record_call()
+        # Log the exact response received
+        logger.info("[Timeline] === LLM RESPONSE ===\n%s\n=== END RESPONSE ===", raw[:1000])
         parsed = json.loads(raw)
 
         # Validate and normalise — clamp, fix degenerate zeros
@@ -321,19 +427,41 @@ _NARRATIVE_TEMPLATES = {
         "You are progressing steadily — ~{lpa} LPA, stress {stress}/100, "
         "happiness {h}/100. Career growth at {cg}/100 suggests continued upward movement."
     ),
+    "educational_strong": (
+        "Your academic performance is strong — focus score {h}/100, "
+        "stress manageable at {stress}/100. "
+        "Preparation trajectory at {cg}/100 positions you well for competitive exams."
+    ),
+    "educational_mid": (
+        "You are progressing through your academic preparation — "
+        "focus at {h}/100, stress {stress}/100. "
+        "Consistent effort at {cg}/100 is building toward your exam goals."
+    ),
+    "educational_stressed": (
+        "Academic pressure is high at {stress}/100, but your preparation "
+        "score of {cg}/100 shows steady progress. "
+        "Focus on maintaining consistency over intensity."
+    ),
 }
 
-def _pick_template(scores: dict, lpa: float, disposable: int) -> str:
+def _pick_template(scores: dict, lpa: float | None, disposable: int, decision_type: str = "") -> str:
     stress = scores.get("stress", 50)
     h      = scores.get("happiness", 50)
     cg     = scores.get("career_growth", 50)
-    ctx    = {"lpa": lpa, "stress": stress, "h": h, "cg": cg, "disposable": max(0, disposable)}
+    ctx    = {"lpa": lpa if lpa is not None else 0, "stress": stress, "h": h, "cg": cg, "disposable": max(0, disposable)}
 
-    if stress < 45 and lpa >= 8:
+    if decision_type == "educational":
+        if stress < 45:
+            return _NARRATIVE_TEMPLATES["educational_strong"].format(**ctx)
+        if stress >= 65:
+            return _NARRATIVE_TEMPLATES["educational_stressed"].format(**ctx)
+        return _NARRATIVE_TEMPLATES["educational_mid"].format(**ctx)
+
+    if lpa is not None and stress < 45 and lpa >= 8:
         return _NARRATIVE_TEMPLATES["low_stress_good_income"].format(**ctx)
-    if stress >= 65 and lpa >= 8:
+    if lpa is not None and stress >= 65 and lpa >= 8:
         return _NARRATIVE_TEMPLATES["high_stress_good_income"].format(**ctx)
-    if lpa < 6 and stress >= 55:
+    if lpa is not None and lpa < 6 and stress >= 55:
         return _NARRATIVE_TEMPLATES["low_income_high_stress"].format(**ctx)
     return _NARRATIVE_TEMPLATES["mid_trajectory"].format(**ctx)
 
@@ -363,7 +491,7 @@ def _build_narratives_llm(
     cache_key = cache.make_key(
         "narratives",
         decision,
-        json.dumps(context, sort_keys=True),
+        json.dumps(context, sort_keys=True, default=str),
         json.dumps({k: {yr: v.get("income") for yr, v in yrs.items()} for k, yrs in tl_scores.items()}),
     )
 
@@ -380,24 +508,50 @@ def _build_narratives_llm(
     )
     cvars = anchors.get("_computed", {})
 
+    # Parse decision for narrative context
+    parsed_decision = parse_decision(decision)
+    options_str = ", ".join(parsed_decision.options) if parsed_decision.options else "N/A"
+
     prompt = f"""You are a life simulation narrative writer.
 
 DECISION: {decision}
+DETECTED OPTIONS: {options_str}
 PERSON: age {context.get('age', 'unknown')}, {context.get('location', 'India')}, {context.get('role', 'professional')}
 
-TIMELINE PERSONALITIES:
+TIMELINE ARCHETYPES:
 {personalities}
 
 CAUSAL SCORES (income score → LPA already computed):
 {json.dumps(tl_scores, indent=2)}
 
+CRITICAL INSTRUCTION:
+The user's decision is: "{decision}"
+
+Each timeline narrative MUST be ROOTED in this specific decision. Do NOT write
+generic career narratives. Each timeline personality explores a different facet
+of the same decision.
+
+For example, if the decision is "CSE or AIML at VIT in 2026?":
+- Timeline A should describe a stable software engineering career from CSE
+- Timeline B should describe a strategic AI/ML career from AIML
+- Timeline C should describe a high-risk/high-reward path, possibly switching
+
+If the decision is "Should I quit my job to start a company?":
+- Timeline A stays employed, builds side projects
+- Timeline B takes a calculated leap with planning
+- Timeline C quits immediately and goes all-in
+
 Write a 2-3 sentence narrative paragraph for EACH timeline × EACH year.
 - Use second person ("You are...")
 - Be SPECIFIC: mention the actual LPA, stress level, and what that means for daily life
-- Each timeline must sound DIFFERENT — A is cautious, B is balanced, C is aggressive
+- Each timeline MUST sound DISTINCT:
+    Timeline A (The Settler): grounded, content, community-focused language
+    Timeline B (The Climber): driven, measured, achievement-oriented language
+    Timeline C (The Gambler): urgent, high-stakes, feast-or-famine language
 - Each year must show PROGRESSION from the previous year
 - Do NOT use generic phrases like "things are going well" or "stress is low"
-- Reference the decision context: "{decision}"
+- Reference the decision options: {options_str}
+- For Timeline C, Year10 must COMMIT to either triumph or cost — not both equally
 
 Output ONLY valid JSON:
 {{
@@ -433,34 +587,48 @@ def _build_narratives(causal_years: dict, anchors: dict, tl_key: str = "", llm_n
         return llm_narratives[tl_key]
 
     # Template fallback
-    cvars      = anchors.get("_computed", {})
-    disposable = cvars.get("disposable_income", 0)
+    cvars         = anchors.get("_computed", {})
+    disposable    = cvars.get("disposable_income", 0)
+    decision_type = anchors.get("_decision_type", "").lower()
     narratives = {}
     for yr, scores in causal_years.items():
         lpa = _score_to_lpa_safe(scores.get("income", 50), anchors)
-        narratives[yr] = _pick_template(scores, lpa, disposable)
+        narratives[yr] = _pick_template(scores, lpa, disposable, decision_type)
     return narratives
 
 
 # ── Score interpretations ─────────────────────────────────────────────────────
 
 def build_score_interpretations(causal_years: dict, anchors: dict) -> dict:
+    grounding = anchors.get("_grounding", {})
+    salary_source = grounding.get("data_source", "static_estimate")
+    cpi_source = grounding.get("cpi_source", "static_estimate")
+    decision_type = anchors.get("_decision_type", "").lower()
+    is_educational = decision_type == "educational"
     interps = {}
     for yr, scores in causal_years.items():
         interps[yr] = {}
         for node, score in scores.items():
             if node == "income":
-                lpa = _score_to_lpa_safe(score, anchors)
-                interps[yr][node] = {
-                    "score": score, "label": f"~{lpa} LPA",
-                    "source": "India salary data 2024",
-                }
+                if is_educational:
+                    label = f"{score}/100 (academic/earning potential score)"
+                    interps[yr][node] = {
+                        "score": score, "label": label,
+                        "source": "Educational projection (no salary data)",
+                    }
+                else:
+                    lpa = _score_to_lpa_safe(score, anchors)
+                    label = f"~{lpa} LPA" if lpa is not None else f"{score}/100 (salary data unavailable)"
+                    interps[yr][node] = {
+                        "score": score, "label": label,
+                        "source": salary_source,
+                    }
             elif node == "opportunity":
                 rate = anchors.get("opportunity_base", 82)
                 interps[yr][node] = {
                     "score": score,
                     "label": f"{score}/100 (base employment {rate}%)",
-                    "source": "Industry employment rate",
+                    "source": cpi_source if grounding.get("live_unemployment") is not None else "static_estimate",
                 }
             else:
                 base = anchors.get("psychographic_bases", {}).get(node)
@@ -580,6 +748,32 @@ def generate_timelines(
     Plus top-level:
       _analysis           : structured decision analysis
     """
+    # ── Validation: ensure decision context exists ───────────────────────────
+    from input_validator import is_likely_meaningful
+    valid, msg = is_likely_meaningful(decision)
+    if not valid:
+        raise ValueError(f"Invalid decision: {msg}")
+
+    # ── Parse and validate decision options ──────────────────────────────────
+    parsed = parse_decision(decision)
+    logger.info("[Timeline] ===== NEW SIMULATION =====")
+    logger.info("[Timeline] Decision: %s", decision)
+    logger.info("[Timeline] Parsed options: %s", parsed.options)
+    logger.info("[Timeline] Decision type: %s", parsed.decision_type)
+    logger.info("[Timeline] Parsing confidence: %d%%", parsed.confidence)
+
+    # Low-confidence handling: if we can't parse the decision, don't silently
+    # generate unrelated outcomes
+    if parsed.confidence < 50:
+        logger.warning("[Timeline] Low parsing confidence (%d%%) for decision: %s",
+                       parsed.confidence, decision)
+        # Still proceed but flag it — the frontend can decide to show a warning
+        context["_low_confidence"] = True
+        context["_parsed_decision"] = {
+            "confidence": parsed.confidence,
+            "options": parsed.options,
+        }
+
     anchors      = _get_anchors(decision, context)
     chaos_events = chaos_events or {}
 
@@ -601,6 +795,13 @@ def generate_timelines(
                 YEAR_GAPS[yr], tl_key[-1],
             )
             causal[yr] = _apply_chaos_deltas(scores, tl_chaos, yr)
+
+        # Post-chaos validation — fix income=0 re-introduced by events
+        for yr in YEARS:
+            if causal.get(yr, {}).get("income", 50) < 5:
+                logger.warning("[Timeline] Post-chaos degenerate income=%s in %s/%s — clamping to 5",
+                               causal[yr]["income"], tl_key, yr)
+                causal[yr]["income"] = 5
 
         narratives      = _build_narratives(causal, anchors, tl_key=tl_key, llm_narratives=llm_narratives)
         interpretations = build_score_interpretations(causal, anchors)

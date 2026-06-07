@@ -1,10 +1,13 @@
 fastapi
 uvicorn
 pydantic
+SQLAlchemy
+celery
+redis
 python-dotenv
 requests
 httpx
-langchain
+langchain>=0.3.0
 langchain-community
 langchain-core
 langchain-openai
@@ -13,3 +16,8 @@ openai
 numpy
 pandas
 litellm
+langgraph>=0.2.0
+chromadb>=0.5.0
+sentence-transformers>=2.2.0
+sentry-sdk>=1.40.0
+langsmith>=0.1.0

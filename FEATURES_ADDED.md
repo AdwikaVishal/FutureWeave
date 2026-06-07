@@ -1,207 +1,180 @@
-# New Features Implementation Summary
+# FutureWeave — Decision Intelligence Platform
 
-All 8 requested features have been fully implemented across backend and frontend.
-
----
-
-## ✅ Feature 1: Personalised Career Score & Recommendation
-
-**What**: After simulation, users can set priority weights (e.g., "I prioritise income 70% / happiness 30%") and get a personalised score for each timeline.
-
-**Backend**: `POST /score`
-- Accepts `simulation_id` + `weights` dict (e.g., `{"income": 0.7, "happiness": 0.3}`)
-- Normalises weights to sum to 1.0
-- Computes time-discounted weighted score: Year1 (10%), Year3 (20%), Year5 (30%), Year10 (40%)
-- Returns ranked timelines with recommendation
-
-**Frontend**: `ValuesSlider.js` + `ScoreResult.js`
-- 7 sliders for income, happiness, career_growth, health, relationships, opportunity, stress
-- Real-time % allocation display (warns if not 100%)
-- Ranked bar chart with "★ BEST FIT" badge on top timeline
+"The Operating System for Human Decisions."
 
 ---
 
-## ✅ Feature 3: Peer Comparison (Anonymised)
+## Core Architecture
 
-**What**: Shows "70% of students who chose similarly ended up in Timeline B after 5 years."
+### 12 Independent Decision Agents
+Each agent independently scores every option, producing per-option scores, reasoning, evidence, and confidence:
 
-**Backend**: `GET /peer-comparison?decision_keywords=...`
-- Queries `FollowUp` table for users who reported back
-- Filters by decision keyword similarity
-- Returns % distribution across timelines
+| Agent | Focus | Analysis |
+|-------|-------|----------|
+| **Financial** | Wealth, cash flow, savings, investments, debt, ROI | Income potential, net worth trajectory, savings rate |
+| **Risk** | Downside risk, uncertainty, volatility, failure probability | Risk exposure, downside scenarios, safety margins |
+| **Opportunity** | Future upside, network effects, career leverage, optionality | Hidden opportunities, growth vectors, optionality |
+| **Health** | Stress, burnout, sleep, physical health | Burnout risk, work-life balance, health trajectory |
+| **Relationship** | Family impact, friendship impact, social support | Social connection, family stability, community support |
+| **Time** | Opportunity cost, years invested, time lost | Time horizon, compounding effects, delay costs |
+| **Happiness** | Life satisfaction, purpose, fulfillment | Well-being trajectory, satisfaction curves |
+| **Identity** | Alignment with values, personal growth, meaning | Value congruence, growth alignment, authenticity |
+| **Career** | Skill growth, employability, promotion timeline | Career acceleration, skill acquisition, seniority |
+| **Strategic** | Long-term positioning, leverage, competitive advantage | Strategic position, bargaining power, market timing |
+| **Lifestyle** | Daily experience, location freedom, work style | Location flexibility, work arrangement, daily satisfaction |
+| **Economic** | Macro conditions, industry health, market trends | GDP, inflation, industry health, salary growth |
 
-**Frontend**: `PeerComparison.js`
-- Auto-fetches on simulation load
-- Displays horizontal bars showing % per timeline
-- Shows total follow-up count
+### Agent Debate System
+- 6 debate topics covering safe vs ambitious, stability vs growth, income vs purpose, etc.
+- Consensus Score (0-100)
+- Disagreement Matrix (voting matrix between all agent pairs)
+- Decision Tension Score
+- Agent Alliances (agents that consistently agree)
+- Primary Disagreement identification
 
----
+### Monte Carlo Engine
+- 10,000+ stochastic simulations
+- Variables: economic cycles, job loss, startup success, market growth, inflation, health events, family events
+- Outputs: Success Probability, Failure Probability, Expected Outcome, Regret Probability
+- Best Case (P90), Expected Case (Mean), Worst Case (P10)
 
-## ✅ Feature 5: "Compare Two Decisions" Side-by-Side
+### Regret Engine
+- 4 regret dimensions: Not Trying, Taking Risk, Delaying, Staying Comfortable
+- Overall Regret Risk Score
+- Regret Timeline (Year 1 → Year 20)
+- Regret Letter from future self
+- Per-option regret breakdown
 
-**What**: User can run two different decisions (e.g., BMSCE vs MAIT) and see direct overlay of radar charts and regret trade-offs.
+### Life Dashboard
+9 key metrics:
+- Life Satisfaction Index
+- Freedom Index
+- Stress Index
+- Purpose Index
+- Wealth Index
+- Relationship Index
+- Growth Index
+- Regret Risk
+- Decision Confidence
 
-**Backend**: `POST /compare-two`
-- Runs two full simulations in parallel
-- Saves both to DB
-- Returns both results with full causal data
+### Confidence Engine
+- 7-component confidence breakdown
+- Agent agreement, data quality, simulation stability, economic certainty, historical similarity, data freshness, data completeness
+- Tier: High / Medium / Low
+- Uncertainty drivers identification
 
-**Frontend**: `CompareTwoModal.js`
-- Two input fields for Decision A and Decision B
-- Year selector (1, 3, 5, 10)
-- Side-by-side radar charts with different color schemes
-- Regret trade-offs comparison below
+### Causal Graph
+- 12 causal edges between life dimensions
+- Positive and negative feedback loops identified
+- Strength-weighted relationships
 
----
-
-## ✅ Feature 4: Counsellor Dashboard
-
-**What**: Separate login for career counsellors to see all simulations from their students, compare across cases, and add notes.
-
-**Backend**:
-- `GET /counsellor/students?counsellor_email=...` — returns all simulations with notes
-- `POST /counsellor/note` — adds a note to any simulation
-- New DB model: `CounsellorNote` (simulation_id, counsellor_email, note, created_at)
-
-**Frontend**: `CounsellorDashboard.js`
-- Email-gated login (simple auth via email param)
-- Expandable student cards showing decision + context
-- All notes displayed per simulation
-- Inline note input with "Enter" to save
-
----
-
-## ✅ Feature 6: Live Job Market Integration
-
-**What**: Fetch real-time demand for skills (e.g., "Python jobs in Bangalore have grown 22% last year").
-
-**Backend**: `GET /job-market?role=...&location=...&skills=...`
-- Live salary range from AmbitionBox (public scrape, no API key)
-- Unemployment % and GDP growth % from World Bank Open Data
-- Optional Adzuna integration (if `ADZUNA_APP_ID` + `ADZUNA_API_KEY` set in `.env`)
-- Per-skill demand data (growth %, job count, trend) from static 2024 dataset
-
-**Frontend**: `JobMarketPanel.js`
-- Displays salary range, unemployment, GDP growth
-- Skill demand table with trend arrows (↑ rising, → stable)
-- Data source badges on each stat
-
----
-
-## ✅ Feature 7: Verification Badge for Data Sources
-
-**What**: Next to every grounded number (e.g., "~62.6 LPA") show a small badge like "📊 AmbitionBox + World Bank".
-
-**Backend**: `GET /data-sources`
-- Returns registry of all data sources with URLs and descriptions
-
-**Frontend**: `DataSourceBadge.js`
-- Inline badge on every causal bar (income, stress, health, etc.)
-- Clickable to show tooltip with source URL
-- Static badge map (no API call needed)
+### Real Data Engine
+- Live data from: World Bank (GDP, unemployment, CPI), AmbitionBox (salary scraping)
+- 5 composite scores: Economic Strength, Employment, Industry Growth, Cost of Living, Salary Opportunity
+- Data freshness tracking (live vs static)
+- Confidence scoring per data source
 
 ---
 
-## ✅ Feature 10: Longitudinal Outcome Library
+## API Endpoints
 
-**What**: After follow-up emails, create a public "What actually happened" page showing anonymised, aggregated results.
+### Frontend (Vite → Backend Proxy)
 
-**Backend**: `GET /outcomes?limit=30`
-- Queries `FollowUp` table for users who reported back
-- Anonymises: strips email, keeps decision preview + context shape
-- Returns outcome cards with chosen timeline + feedback preview
-- Aggregate stats: total follow-ups, timeline distribution
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v2/simulate` | POST | Full simulation (agents, MC, regret, dashboard) |
+| `/v2/pivot` | POST | What-if scenario simulation |
+| `/v2/simulation/{id}` | GET | Retrieve saved simulation |
+| `/v2/simulate-and-save` | POST | Simulate + persist to database |
+| `/v2/health` | GET | API health check |
 
-**Frontend**: `OutcomeLibrary.js`
-- Paginated outcome cards (decision preview, age, location, months elapsed)
-- Aggregate distribution bar at top
-- Feedback quotes with proper HTML entities
+### Backend (api.py)
 
----
-
-## 🎨 UI/UX Enhancements
-
-**Header Actions** (App.js):
-- "⇄ Compare Two Decisions" button
-- "🎓 Counsellor Login" button
-- "📚 Outcome Library" button
-
-**Collapsible Panels** (TimelineView.js):
-- Personalised Score panel (toggle button)
-- Peer Comparison panel (always visible)
-- Job Market panel (always visible)
-
-**Styling** (App.css):
-- ~350 lines of new CSS matching existing neon dark theme
-- Responsive grid layouts
-- Glow effects on all interactive elements
-- Proper accessibility (labels, ARIA roles, keyboard nav)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/simulate` | POST | Legacy simulation |
+| `/simulate-v2` | POST | LangGraph version |
+| `/score` | POST | Personalised scoring |
+| `/peer-comparison` | GET | Anonymised peer data |
+| `/compare-two` | POST | Side-by-side decision comparison |
+| `/counsellor/students` | GET | Counsellor dashboard |
+| `/job-market` | GET | Live job market data |
+| `/economic-research` | POST | Economic research agent |
+| `/future-chat` | POST | Future self conversation |
+| `/monte-carlo` | POST | Standalone MC simulation |
+| `/memory/query` | POST | Memory retrieval |
+| `/outcomes` | GET | Outcome library |
 
 ---
 
-## 📦 Database Schema Updates
+## Frontend Tabs
 
-**New Models** (models.py):
-```python
-class CounsellorNote(Base):
-    id, simulation_id, counsellor_email, note, created_at
-
-class OutcomeRecord(Base):
-    id, simulation_id, decision_hash, context_snapshot,
-    predicted_scores, chosen_timeline, actual_outcome,
-    months_elapsed, created_at
-```
+| Tab | Component | Features |
+|-----|-----------|----------|
+| **Dashboard** | `Dashboard.tsx` | Overview cards, life dashboard, regret analysis, agent debate, data sources, economic indicators, path comparison, MC summary |
+| **Paths** | `TimelineView.tsx` | Life trajectory charts, year-by-year detail, best/expected/worst case |
+| **Agents** | `AgentsView.tsx` | 12 agent cards with scores, reasoning, evidence, tensions, option rankings |
+| **Monte Carlo** | `MonteCarloView.tsx` | Distribution means, path comparison, risk metrics, case scenarios |
+| **Confidence** | `ConfidenceView.tsx` | Overall gauge, component scores, per-aspect radar, per-agent confidence |
+| **Explorer** | `Explorer.tsx` | Year-by-year path comparison across all dimensions |
+| **Regret** | `RegretView.tsx` | Regret sources, timeline, per-option breakdown, regret letter |
+| **Pivot** | `PivotView.tsx` | What-if simulator with side-by-side comparison and delta effects |
+| **Future Chat** | `FutureChat.tsx` | Conversational interface with simulation context |
 
 ---
 
-## 🔧 Environment Variables
+## Database Schema
 
-**New in `.env`**:
+- **users_v2** — User accounts
+- **simulations_v2** — Simulation results with full JSON payloads
+- **timelines_v2** — Per-path year-by-year scores and events
+- **agent_outputs_v2** — Per-agent outputs, scores, reasoning
+- **monte_carlo_runs_v2** — MC iteration results and distributions
+- **pivot_events_v2** — What-if pivot history
+- **simulations** — Legacy simulation storage
+- **counsellor_notes** — Counsellor annotations
+- **outcome_records** — Longitudinal follow-up tracking
+
+---
+
+## Tech Stack
+
+**Backend:** Python, FastAPI, SQLAlchemy, Pydantic, Uvicorn
+**AI/ML:** LangGraph (agent orchestration), 12 rule-based agents, Monte Carlo simulation
+**Data:** World Bank API, AmbitionBox scraping, static datasets
+**Frontend:** React 19, TypeScript, Vite, Zustand (state), Recharts (charts), Lucide (icons)
+**Database:** SQLite (dev) / PostgreSQL (production)
+
+---
+
+## How to Run
+
 ```bash
-# Live job market (optional — degrades gracefully without keys)
-ADZUNA_APP_ID=
-ADZUNA_API_KEY=
+# Start backend (port 8000)
+cd sim-engine && uvicorn api:app --reload --port 8000
 
-# Counsellor dashboard
-COUNSELLOR_EMAILS=  # comma-separated list (leave blank to allow all)
+# Start frontend (port 5173, proxies /v2 to :8000)  
+cd sim-ui && npm run dev
+
+# Or use the combined launcher:
+./run.sh
 ```
 
----
-
-## 🚀 How to Use
-
-1. **Run backend**: `cd sim-engine && python api.py`
-2. **Run frontend**: `cd sim-ui && npm start`
-3. **Test features**:
-   - Run a simulation → see Personalised Score panel below comparison
-   - Click "Compare Two Decisions" → enter two decisions → see side-by-side radar charts
-   - Click "Counsellor Login" → enter email → see all student simulations
-   - Click "Outcome Library" → see anonymised follow-up outcomes
-   - Scroll to Job Market panel → see live salary + skill demand
-   - Hover over data source badges → see source URLs
+Open http://localhost:5173 in your browser.
 
 ---
 
-## 📊 Data Sources
+## Verification Status
 
-All grounded data comes from:
-- **AmbitionBox**: Live salary scraping (public pages, no API key)
-- **World Bank Open Data**: Unemployment %, CPI %, GDP growth %
-- **Adzuna** (optional): Live job listings count
-- **Static 2024 dataset**: Per-skill demand (Python, React, ML, etc.)
-- **Psychographic baselines**: Deloitte 2023, WHO 2022, World Happiness Report 2023
-
----
-
-## ✨ All Features Working
-
-- ✅ Personalised scoring with value sliders
-- ✅ Peer comparison with anonymised stats
-- ✅ Side-by-side decision comparison
-- ✅ Counsellor dashboard with notes
-- ✅ Live job market integration
-- ✅ Data source verification badges
-- ✅ Longitudinal outcome library
-- ✅ All ESLint errors fixed
-- ✅ Responsive design
-- ✅ Accessibility compliant
+- [x] Frontend TypeScript build passes (0 errors)
+- [x] Backend API starts and responds
+- [x] `/v2/simulate` endpoint produces full simulation
+- [x] All 12 agents execute in parallel
+- [x] Monte Carlo simulation runs (50-10000 iterations)
+- [x] Regret analysis generates scores and letters
+- [x] Life dashboard computes 9 dimensions
+- [x] Confidence engine evaluates uncertainty
+- [x] Agent debate produces tension scores and alliances
+- [x] Real data integration (World Bank, AmbitionBox)
+- [x] Vite dev server proxies to backend
+- [x] All 9 frontend tabs render simulation data
